@@ -1,27 +1,29 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-      id="de.grs-software.uwp-rfid"
-      version="1.0.0">
-    <name>RFID</name>
-    <description>RFID plugin for Apache Cordova</description>
-    <license>BSD</license>
-    <keywords></keywords>
-    <repo></repo>
-    <issue></issue>
+	id="de.grs-software.uwp-rfid"
+	version="1.0.0">
+	<name>RFID</name>
+	<description>RFID plugin for Apache Cordova</description>
+	<license>BSD</license>
+	<keywords></keywords>
+	<repo></repo>
+	<issue></issue>
 
-    <js-module src="www/RFID.js" name="RFID">
-        <clobbers target="RFID" />
-    </js-module>
+	<js-module src="www/RFID.js" name="RFID">
+		<clobbers target="RFID" />
+	</js-module>
 
-    <!-- windows -->
-    <platform name="windows">
-        <config-file target="config.xml" parent="/*">
-            <feature name="RFID">
-                <param name="wp-package" value="RFID"/>
-            </feature>
-        </config-file>
+	<!-- windows -->
+	<platform name="windows">
+		<config-file target="package.windows10.appxmanifest" parent="/Package/Capabilities">
+			<Capability Name="internetClient" />
+			<DeviceCapability Name="proximity" />
+		</config-file>
 
-        <source-file src="src/wp/BarcodeScanner.cs" />
-    </platform>
-
+		<js-module src="src/windows/RFIDProxy.js" name="RFIDProxy">
+			<merges target="" />
+		</js-module>
+		
+		<framework src="lib/cordova_uwp_rfid.winmd" custom="true" />
+	</platform>
 </plugin>

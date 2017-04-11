@@ -1,41 +1,101 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RFIDAPI;
+using cordova_uwp_rfid;
+using Windows.Networking.Proximity;
 
-namespace WPCordovaClassLib.Cordova.Commands {
-	public class RFID : BaseCommand {
+namespace cordova_uwp_rfid {
+	public delegate void MessageHandler(String message);
+
+	public sealed class MessageEventArgs {
+		public String message {
+			get;
+			set;
+		}
+	}
+
+	public sealed class RFID {
+		#region SINGLETON
+		private static volatile RFID instance;
+		private static object sync = new Object();
+
+		public static RFID Instance {
+			get {
+				if (RFID.instance == null) {
+					lock (sync) {
+						if (RFID.instance == null) {
+							RFID.instance = new RFID();
+						}
+					}
+				}
+
+				return RFID.instance;
+			}
+		}
+		#endregion
+
 		private RFIDSocket rfidSocket;
+		public event EventHandler<MessageEventArgs> Message;
+		public event EventHandler<MessageEventArgs> Failure;
+		public bool Active {
+			get;
+			private set;
+		}
 
-		public void Enable(string options) {
-			PluginResult result = null;
+		private RFID() {
+			Active = false;
+			rfidSocket = new RFIDSocket();
+		}
+
+		public void Enable() {
 
 			try {
 
-				if (rfidSocket == null) {
-					rfidSocket = new RFIDSocket();
-				}
+				this.Message(this, new MessageEventArgs() { message = "Test..." });
 
-				rfidSocket.NDEFMessageHandler = (message) => {
-					PluginResult iResult = new PluginResult(PluginResult.Status.OK, message.Payload);
-					iResult.KeepCallback = true;
-					DispatchCommandResult(result);
+				/*rfidSocket.ArrivedHandler = (sender) => {
+					if (this.Message != null) {
+						this.Message(this, new MessageEventArgs() { message = "Device Arrived" });
+					}
+				};
+				//
+				rfidSocket.DepartedHandler = (sender) => {
+					if (this.Message != null) {
+						this.Message(this, new MessageEventArgs() { message = "Device Departed" });
+					}
 				};
 
-				rfidSocket.SubscribeForMessages();
+				rfidSocket.NDEFMessageHandler = (message) => {
+					if (this.Message != null) {
+						this.Message(this, new MessageEventArgs() { message = message.Payload });
+					}
+				};
 
-				result = new PluginResult(PluginResult.Status.NO_RESULT);
-				result.KeepCallback = true;
+				rfidSocket.SubscribeForMessages();*/
+
+				Active = true;
 
 			} catch (Exception e) {
-				result = new PluginResult(PluginResult.Status.ERROR, e.Message);
+				if (this.Failure != null) {
+					this.Failure(this, new MessageEventArgs() { message = e.Message });
+				}
 			}
 
-			DispatchCommandResult(result);
-			
 		}
 
-    }
+		public ProximityDevice Device {
+			get {
+				if (rfidSocket != null) {
+					return this.rfidSocket.Device;
+				} else {
+					return null;
+				}
+			}
+		}
+
+		public RFIDSocket Socket {
+			get {
+				return rfidSocket;
+			}
+		}
+
+	}
 }
